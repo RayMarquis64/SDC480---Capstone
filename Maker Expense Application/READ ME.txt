@@ -1,0 +1,22 @@
+To run the application in its current version, I recommend running it from VS Code and using the terminal.
+
+Requirements
+	
+	Python
+	SQLite3
+	openpyxl (Not implemented)
+	
+When in the terminal use
+	pip install openpyxl (important for when I figure out and upload the export capabilities)
+	
+	then run
+
+	python project_pricer.py 
+
+	The window is expandable, If you cannot see features you are expecting to see, expand the window. 
+
+Continuing support will include a windows build file that will convert the application into an executable. 
+
+Excel export still not implemented currently
+No current DB redundancy
+Material quantity calculations not currently implemented properly, calculate material cost separately. 
