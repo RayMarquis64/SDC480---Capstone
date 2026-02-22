@@ -10,7 +10,7 @@ import json
 class ProjectPricerApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Project Pricer - Maker Edition")
+        self.root.title("Project Pricer - Estimate Your DIY Projects")
         self.root.geometry("900x700")
         
         # Initialize database
@@ -116,6 +116,12 @@ class ProjectPricerApp:
         export_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Export", menu=export_menu)
         export_menu.add_command(label="Export to Excel", command=self.export_to_excel)
+        
+        # Help menu
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="Check Environment", command=self.check_environment)
+        help_menu.add_command(label="About", command=self.show_about)
     
     def create_main_layout(self):
         """Create main application layout"""
@@ -265,7 +271,7 @@ class ProjectPricerApp:
         ttk.Button(labor_buttons, text="Remove Labor", command=self.remove_labor).pack(side='left', padx=2)
         
         # Tool usage section
-        tool_usage_frame = ttk.LabelFrame(self.current_project_frame, text="Tool Usage", padding=10)
+        tool_usage_frame = ttk.LabelFrame(self.current_project_frame, text="Tool & Machine Usage", padding=10)
         tool_usage_frame.pack(fill='both', expand=True, padx=10, pady=5)
         
         tool_columns = ('Tool', 'Hours', 'Rate', 'Total')
@@ -275,12 +281,12 @@ class ProjectPricerApp:
             self.tool_usage_tree.heading(col, text=col)
             self.tool_usage_tree.column(col, width=120)
         
-        self.tool_usage_tree.pack(fill='both', expand=True)
+        self.tool_usage_tree.pack(fill='both', expand=True, pady=(0, 5))
         
         tool_buttons = ttk.Frame(tool_usage_frame)
         tool_buttons.pack(fill='x', pady=5)
-        ttk.Button(tool_buttons, text="Add Tool Usage", command=self.add_tool_usage).pack(side='left', padx=2)
-        ttk.Button(tool_buttons, text="Remove Tool Usage", command=self.remove_tool_usage).pack(side='left', padx=2)
+        ttk.Button(tool_buttons, text="Add Tool Usage", command=self.add_tool_usage, width=15).pack(side='left', padx=5)
+        ttk.Button(tool_buttons, text="Remove Tool Usage", command=self.remove_tool_usage, width=18).pack(side='left', padx=5)
         
         # Total cost
         total_frame = ttk.Frame(self.current_project_frame)
@@ -812,6 +818,18 @@ class ProjectPricerApp:
             messagebox.showerror("Error", "No project selected")
             return
         
+        # First check if openpyxl is available
+        try:
+            import openpyxl
+        except ImportError:
+            messagebox.showerror("Missing Dependency", 
+                              "Excel export requires the 'openpyxl' library.\n\n"
+                              "Install it with:\n"
+                              "  pip install openpyxl\n\n"
+                              "Then restart the application.")
+            return
+        
+        # Now try to import and use the export function
         try:
             from excel_export import export_project_to_excel
             
@@ -831,13 +849,157 @@ class ProjectPricerApp:
                 export_project_to_excel(self.cursor, self.current_project_id, filename)
                 messagebox.showinfo("Success", f"Project exported to:\n{filename}")
                 
-        except ImportError:
-            messagebox.showerror("Missing Dependency", 
-                              "Excel export requires the 'openpyxl' library.\n\n"
-                              "Install it with: pip install openpyxl\n\n"
-                              "Then restart the application.")
+        except ImportError as e:
+            messagebox.showerror("Import Error", 
+                              f"Could not import excel_export module.\n\n"
+                              f"Make sure 'excel_export.py' is in the same folder as this application.\n\n"
+                              f"Error: {str(e)}")
         except Exception as e:
             messagebox.showerror("Export Error", f"Failed to export project:\n{str(e)}")
+    
+    def check_environment(self):
+        """Check the environment and display diagnostic information"""
+        import sys
+        import os
+        
+        # Build diagnostic report
+        report = []
+        report.append("=" * 60)
+        report.append("PROJECT PRICER - ENVIRONMENT DIAGNOSTIC")
+        report.append("=" * 60)
+        report.append("")
+        
+        # Python version
+        report.append(f"Python Version: {sys.version.split()[0]}")
+        report.append(f"Python Executable: {sys.executable}")
+        report.append("")
+        
+        # Check for openpyxl
+        report.append("Checking for openpyxl...")
+        try:
+            import openpyxl
+            report.append(f"✓ openpyxl is installed (version {openpyxl.__version__})")
+            openpyxl_ok = True
+        except ImportError:
+            report.append("✗ openpyxl is NOT installed")
+            report.append("  Install with: pip install openpyxl")
+            openpyxl_ok = False
+        report.append("")
+        
+        # Check for required files
+        report.append("Checking for required files...")
+        excel_export_exists = os.path.exists('excel_export.py')
+        if excel_export_exists:
+            report.append("✓ excel_export.py found")
+        else:
+            report.append("✗ excel_export.py NOT found in current directory")
+        report.append("")
+        
+        # Check if excel_export can be imported
+        if excel_export_exists:
+            report.append("Checking if excel_export module works...")
+            try:
+                import excel_export
+                report.append("✓ excel_export.py imports successfully")
+                module_ok = True
+            except ImportError as e:
+                report.append(f"✗ excel_export.py import failed: {e}")
+                module_ok = False
+            report.append("")
+        else:
+            module_ok = False
+        
+        # Summary
+        report.append("=" * 60)
+        report.append("SUMMARY")
+        report.append("=" * 60)
+        
+        if openpyxl_ok and excel_export_exists and module_ok:
+            report.append("✓ Everything looks good!")
+            report.append("  Excel export should work correctly.")
+        else:
+            report.append("⚠ Issues found:")
+            if not openpyxl_ok:
+                report.append("  • openpyxl not installed")
+                report.append("    Run: pip install openpyxl")
+            if not excel_export_exists:
+                report.append("  • excel_export.py missing")
+                report.append("    Make sure it's in the same folder")
+            if excel_export_exists and not module_ok:
+                report.append("  • excel_export.py has errors")
+        report.append("")
+        
+        # Try to get pip list for openpyxl
+        report.append("-" * 60)
+        report.append("Installed packages (openpyxl related):")
+        try:
+            import subprocess
+            result = subprocess.run([sys.executable, '-m', 'pip', 'list'], 
+                                  capture_output=True, text=True, timeout=5)
+            lines = result.stdout.split('\n')
+            found_packages = False
+            for line in lines:
+                if any(word in line.lower() for word in ['openpyxl', 'et-xmlfile']):
+                    report.append(f"  {line}")
+                    found_packages = True
+            if not found_packages:
+                report.append("  (no openpyxl packages found)")
+        except Exception as e:
+            report.append(f"  Could not list packages: {e}")
+        
+        report.append("=" * 60)
+        
+        # Display in a dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Environment Diagnostic")
+        dialog.geometry("700x600")
+        dialog.transient(self.root)
+        
+        # Create text widget with scrollbar
+        frame = ttk.Frame(dialog)
+        frame.pack(fill='both', expand=True, padx=10, pady=10)
+        
+        scrollbar = ttk.Scrollbar(frame)
+        scrollbar.pack(side='right', fill='y')
+        
+        text_widget = tk.Text(frame, wrap='word', yscrollcommand=scrollbar.set, 
+                            font=('Courier', 10))
+        text_widget.pack(side='left', fill='both', expand=True)
+        scrollbar.config(command=text_widget.yview)
+        
+        # Insert report
+        text_widget.insert('1.0', '\n'.join(report))
+        text_widget.config(state='disabled')  # Make read-only
+        
+        # Copy button
+        def copy_to_clipboard():
+            self.root.clipboard_clear()
+            self.root.clipboard_append('\n'.join(report))
+            messagebox.showinfo("Copied", "Diagnostic report copied to clipboard!")
+        
+        button_frame = ttk.Frame(dialog)
+        button_frame.pack(fill='x', padx=10, pady=5)
+        ttk.Button(button_frame, text="Copy to Clipboard", command=copy_to_clipboard).pack(side='left', padx=5)
+        ttk.Button(button_frame, text="Close", command=dialog.destroy).pack(side='right', padx=5)
+    
+    def show_about(self):
+        """Show about dialog"""
+        about_text = """Project Pricer - Maker Edition
+Version 1.0
+
+A desktop application for makers and DIYers to 
+price out projects by tracking materials, labor, 
+and tool usage.
+
+Features:
+• User profile management
+• Project cost tracking
+• Excel export for professional quotes
+• SQLite database storage
+
+Created with Python and Tkinter
+        """
+        messagebox.showinfo("About Project Pricer", about_text)
     
     def __del__(self):
         """Close database connection"""

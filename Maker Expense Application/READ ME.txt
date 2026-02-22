@@ -4,10 +4,10 @@ Requirements
 	
 	Python
 	SQLite3
-	openpyxl (Not implemented)
+	openpyxl 
 	
 When in the terminal use
-	pip install openpyxl (important for when I figure out and upload the export capabilities)
+	pip install openpyxl 
 	
 	then run
 
@@ -15,8 +15,11 @@ When in the terminal use
 
 	The window is expandable, If you cannot see features you are expecting to see, expand the window. 
 
+Run build_windows.bat file to create executable application to Destop
+
+Check desktop for ProjectPricer.exe
+
 Continuing support will include a windows build file that will convert the application into an executable. 
 
-Excel export still not implemented currently
 No current DB redundancy
 Material quantity calculations not currently implemented properly, calculate material cost separately. 
